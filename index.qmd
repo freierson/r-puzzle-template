@@ -1,0 +1,100 @@
+---
+format: revealjs
+navigation-mode: vertical
+scrollable: true
+transition: slide
+embed-resources: true
+params:
+  puzzle_file: 'all-puzzles.qmd'
+---
+
+# R puzzles
+
+::: {.callout-note}
+### Navigation
+
+Press the right arrow key (→) to go to next puzzle.
+Press the down arrow key (↓) to incrementally reveal answer step by step.
+
+:::
+
+::: {.callout-note}
+For all puzzles please assume that `tidyverse` has been loaded.
+:::
+
+
+```{r}
+library(tidyverse)
+all_puzzles <- readr::read_file(params$puzzle_file) |>
+  unlist() |>
+  paste0(collapse = '\n') |>
+  stringr::str_remove_all(fixed('```{r}')) |>
+  trimws() |>
+  stringr::str_remove('```$') |>
+  stringr::str_split_1(pattern = '```') |>
+  sapply(trimws, which = 'both')
+get_hint <- function(puzzle, hint = 0) {
+  if (hint == 0) {
+    return(puzzle)
+  }
+  matches <- gregexpr("\\|>", puzzle)[[1]] |>
+    as.numeric() |>
+    purrr::map_dbl( ~ ifelse(.x == -1, NA, .x)) |>
+    stats::na.omit() |>
+    as.vector()
+  if (length(matches) < hint) {
+    return(puzzle)
+  } else {
+    return(substr(puzzle, 1, matches[[hint]] - 2))
+  }
+}
+```
+
+```{r}
+#| results: asis
+for (puzzle_id in 1:length(all_puzzles)) {
+  hint <- 0
+  current_puzzle <- all_puzzles[[puzzle_id]]
+  question_text <-
+    stringr::str_extract(current_puzzle, '(?<=#).*?\n') |> trimws()
+  pipes <-
+    stringr::str_count(pattern = "\\|>", string = current_puzzle)
+  cat(paste0('# ↓ Puzzle ', puzzle_id, '\n---\n\n'))
+  if (!is.na(question_text)) {
+    cat(paste0('### ', question_text, ' \n\n'))
+    current_puzzle <- str_remove(current_puzzle, '^.*\n')
+  }
+  else
+    cat(paste0('### What does the following code do? \n\n'))
+  while (hint <= pipes + 1) {
+    current_hint <- get_hint(current_puzzle, hint)
+    src <- paste(
+      if (hint > 0)
+        '\n\n---\n\n',
+      if (hint > 0 && hint <= pipes)
+        paste0('### Step ', hint, '\n'),
+      if (hint == pipes + 1)
+        paste0('### Final answer\n'),
+      if (hint != 0)
+        '```{r, echo=T}'
+      else
+        '```r',
+      current_hint,
+      '```',
+      if (hint == 0)
+        '↓ step by step answer',
+      sep = '\n'
+    )
+    res <- knitr::knit_child(text = unlist(src),
+                             quiet = T)
+    cat(res, sep = '\n')
+    hint <- hint + 1
+  }
+}
+```
+
+
+
+
+
+

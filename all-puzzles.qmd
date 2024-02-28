@@ -1,0 +1,59 @@
+```{r}
+# What number does the following line of code return?
+data.frame(
+  x = 1:2,
+  c = 1:2
+) |>
+  dplyr::filter(is.function(c)) |>
+  nrow()
+```
+
+
+```{r}
+# What number does the following line of code return?
+data.frame(
+  x = 1:2,
+  c = 1:2
+) |>
+  filter(is.function(!!c)) |>
+  nrow()
+```
+
+
+```{r}
+# What number does the following line of code return?
+tibble(
+  f = c(list(\(x) x + 1), list(\(x) x + 2)),
+  y = c(1,1)
+) |>
+  rowwise() |>
+  mutate(g = list(\(x) f(x) + 1), x = g(y)) |>
+  pull(x) |>
+  sum()
+```
+
+
+```{r}
+# What number does the following line of code return?
+data.frame(
+  o = c(1,2,0,4),
+  c = paste0('(', 4:1),
+  data = tolower(LETTERS[1:4]),
+  mean = rep('+',4),
+  sum = rep('5*2,1)',4),
+  x = c('c', 'mean','data', 'sum')
+) |>
+  rowwise() |>
+  mutate(y = list(get(x))) |> 
+  arrange(o) |>
+  pull(y) |>
+  paste0(collapse = '') |>
+  parse(text=_) |>
+  eval() |>
+  sum()
+```
+
+
+
+
+
